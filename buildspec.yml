@@ -20,9 +20,9 @@ phases:
       - echo Building gradle project...
       - gradle clean build
       - echo Building the Docker image...
-      - pushd reviews-wlpcfg
+      - cd reviews-wlpcfg
       - docker build --pull -t "${PREFIX}/${REPO_NAME}:${VERSION}" -t "${PREFIX}/${REPO_NAME}:latest" .
-      - popd
+      - cd ..
       - |
         if ! repoMsg=$(aws ecr describe-repositories --repository-names ${REPO_NAME} --region $dstRegion 2>&1); then
           echo -n "${REPO_NAME} does not exists in ECR@${AWS_REGION}, creating... "

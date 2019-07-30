@@ -1,40 +1,40 @@
-version: 0.2
-
-phases:
-  install:
-    runtime-versions:
-      docker: 18
-  pre_build:
-    commands:
-      - REPO_NAME=bookinfo-reviews
-      - AWS_ACCOUNT=$(aws sts get-caller-identity | jq -r ".Account")
-      - PREFIX=${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com
-      - VERSION=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - echo PREFIX=$PREFIX
-      - echo VERSION=$VERSION
-      - echo Logging in to Amazon ECR...
-      - $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
-  build:
-    commands:
-      - echo Build started on `date`
-      - echo Building gradle project...
-      - gradle clean build
-      - echo Building the Docker image...
-      - cd reviews-wlpcfg
-      - docker build --pull -t "${PREFIX}/${REPO_NAME}:${VERSION}" -t "${PREFIX}/${REPO_NAME}:latest" .
-      - cd ..
-      - |
-        if ! repoMsg=$(aws ecr describe-repositories --repository-names ${REPO_NAME} --region $dstRegion 2>&1); then
-          echo -n "${REPO_NAME} does not exists in ECR@${AWS_REGION}, creating... "
-          aws ecr create-repository --repository-name ${REPO_NAME} --region ${AWS_REGION} > /dev/null
-          echo "done."
-        fi
-      - docker push ${PREFIX}/${REPO_NAME}:${VERSION}
-      - docker push ${PREFIX}/${REPO_NAME}:latest
-  post_build:
-    commands:
-      - echo Build completed on `date`
-      - echo Writing image definitions file...
-      - printf '[{"name":"watchbot-worker","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
-artifacts:
-    files: imagedefinitions.json
+version: 0.2 
+ 
+phases: 
+  install: 
+    runtime-versions: 
+      docker: 18 
+  pre_build: 
+    commands: 
+      - REPO_NAME=bookinfo-reviews 
+      - AWS_ACCOUNT=$(aws sts get-caller-identity | jq -r ".Account") 
+      - PREFIX=${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com 
+      - VERSION=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7) 
+      - echo PREFIX=$PREFIX 
+      - echo VERSION=$VERSION 
+      - echo Logging in to Amazon ECR... 
+      - $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email) 
+  build: 
+    commands: 
+      - echo Build started on `date` 
+      - echo Building gradle project... 
+      - gradle clean build 
+      - echo Building the Docker image... 
+      - cd reviews-wlpcfg 
+      - docker build --pull -t "${PREFIX}/${REPO_NAME}:${VERSION}" -t "${PREFIX}/${REPO_NAME}:latest" . 
+      - cd .. 
+      - | 
+        if ! repoMsg=$(aws ecr describe-repositories --repository-names ${REPO_NAME} --region $dstRegion 2>&1); then 
+          echo -n "${REPO_NAME} does not exists in ECR@${AWS_REGION}, creating... " 
+          aws ecr create-repository --repository-name ${REPO_NAME} --region ${AWS_REGION} > /dev/null 
+          echo "done." 
+        fi 
+      - docker push ${PREFIX}/${REPO_NAME}:${VERSION} 
+      - docker push ${PREFIX}/${REPO_NAME}:latest 
+  post_build: 
+    commands: 
+      - echo Build completed on `date` 
+      - echo Writing image definitions file... 
+      - echo "${PREFIX}/${REPO_NAME}:${VERSION}" > imagedefinition.txt 
+artifacts: 
+    files: imagedefinition.txt 
